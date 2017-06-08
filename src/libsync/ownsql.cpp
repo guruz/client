@@ -154,6 +154,18 @@ QString SqlDatabase::error() const
 void SqlDatabase::close()
 {
     if (_db) {
+        SqlQuery quick_check(*this);
+        quick_check.prepare("PRAGMA optimize(-1);");
+        if (!quick_check.exec()) {
+            qCWarning(lcSql) << "Error running optimize on database";
+        }
+
+        qDebug() << quick_check.next();
+        QString result = quick_check.stringValue(0);
+        qDebug() << "ZURUG" << result << _errId << sqlite3_errmsg(_db);
+        _errId = SQLITE_OK;
+        quick_check.finish();
+
         SQLITE_DO(sqlite3_close(_db));
         // Fatal because reopening an unclosed db might be problematic.
         ENFORCE(_errId == SQLITE_OK, "Error when closing DB");
